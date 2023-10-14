@@ -53,7 +53,6 @@ func main() {
 	p := tea.NewProgram(
 		createModel(filePath),
 		tea.WithAltScreen(),
-		tea.WithMouseCellMotion(),
 	)
 
 	if _, err := p.Run(); err != nil {

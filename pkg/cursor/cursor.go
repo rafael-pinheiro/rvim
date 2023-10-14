@@ -3,6 +3,7 @@ package cursor
 import (
 	"fmt"
 	"rvim/pkg/buffer"
+	"strconv"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -13,6 +14,8 @@ type Model struct {
 	buffer         *buffer.Model
 	line           int
 	column         int
+	repeater       string
+	direction      string
 	style          lipgloss.Style
 	blinkerChannel chan lipgloss.Style
 }
@@ -28,6 +31,8 @@ func CreateModel(buffer *buffer.Model) Model {
 		buffer:         buffer,
 		line:           0,
 		column:         0,
+		repeater:       "",
+		direction:      "",
 		style:          styles[true],
 		blinkerChannel: make(chan lipgloss.Style),
 	}
@@ -44,16 +49,12 @@ func (m Model) GetDistance(line int) int {
 	return line - m.line
 }
 
-func (m Model) GetFormattedDistance(line int) string {
-	lineDistance := m.GetDistance(line)
-	lineNumber := fmt.Sprint(line)
-	if lineDistance < 0 {
-		lineNumber = fmt.Sprint(lineDistance)
-	} else if lineDistance > 0 {
-		lineNumber = fmt.Sprintf("+%d", lineDistance)
-	}
+func (m Model) GetPosition() (int, int) {
+	return m.line, m.column
+}
 
-	return lineNumber
+func (m Model) GetDirection() string {
+	return m.direction
 }
 
 func max(a int, b int) int {
@@ -64,50 +65,60 @@ func max(a int, b int) int {
 	return b
 }
 
+func min(a int, b int) int {
+	if a < b {
+		return a
+	}
+
+	return b
+}
+
+func (m *Model) getRepeater() int {
+	repeater, err := strconv.Atoi(m.repeater)
+
+	if err != nil {
+		return 1
+	}
+
+	m.repeater = ""
+
+	return repeater
+}
+
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "h", "left":
-			if m.column > 0 {
-				m.column--
-			}
+			m.column = max(0, m.column-m.getRepeater())
+			m.direction = "left"
 			m.style = styles[true]
 		case "l", "right":
-			if m.column < len(m.buffer.GetLine(m.line))-1 {
-				m.column++
-			}
+			m.column = min(len(m.buffer.GetLine(m.line))-1, m.column+m.getRepeater())
+			m.direction = "right"
 			m.style = styles[true]
 		case "k", "up":
-			if m.line > 0 {
-				m.line--
-
-				lineLength := max(0, len(m.buffer.GetLine(m.line))-1)
-
-				if lineLength == 0 {
-					m.column = 0
-				}
-
-				if m.column > lineLength {
-					m.column = lineLength
-				}
-			}
+			m.line = max(0, m.line-m.getRepeater())
+			m.direction = "up"
+			m.column = min(
+				max(0, len(m.buffer.GetLine(m.line))-1),
+				m.column,
+			)
 			m.style = styles[true]
 		case "j", "down":
-
-			if m.line < len(m.buffer.GetText())-1 {
-				m.line++
-				lineLength := max(0, len(m.buffer.GetLine(m.line))-1)
-
-				if lineLength == 0 {
-					m.column = 0
-				}
-
-				if m.column > lineLength {
-					m.column = lineLength
-				}
-			}
+			m.line = min(len(m.buffer.GetText())-1, m.line+m.getRepeater())
+			m.direction = "down"
+			m.column = min(
+				max(0, len(m.buffer.GetLine(m.line))-1),
+				m.column,
+			)
 			m.style = styles[true]
+		case "0":
+			if m.repeater != "" {
+				m.repeater += "0"
+			}
+		case "1", "2", "3", "4", "5", "6", "7", "8", "9":
+			m.repeater += msg.String()
 		}
 
 	case blinkMsg:

@@ -10,20 +10,22 @@ import (
 )
 
 type Model struct {
-	buffer buffer.Model
-	cursor cursor.Model
-	width  int
-	height int
+	buffer  buffer.Model
+	cursor  cursor.Model
+	topLine int
+	width   int
+	height  int
 }
 
 func CreateModel(filePath string) Model {
 	buffer := buffer.CreateModel(filePath)
 
 	return Model{
-		buffer: buffer,
-		cursor: cursor.CreateModel(&buffer),
-		width:  0,
-		height: 0,
+		buffer:  buffer,
+		cursor:  cursor.CreateModel(&buffer),
+		topLine: 0,
+		width:   10,
+		height:  10,
 	}
 }
 
@@ -44,26 +46,52 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	m.cursor, cmd = m.cursor.Update(msg)
 	cmds = append(cmds, cmd)
 
+	m.adjustViewPort()
+
 	return m, tea.Batch(cmds...)
 }
 
 var separator = "▏"
 var lineNumberStyle = lipgloss.NewStyle().Width(3).Align(lipgloss.Right)
 
+func (m Model) viewLineNumber(line int) string {
+	lineDistance := m.cursor.GetDistance(line)
+	lineNumber := fmt.Sprint(line + 1)
+	if lineDistance < 0 {
+		lineNumber = fmt.Sprint(lineDistance)
+	} else if lineDistance > 0 {
+		lineNumber = fmt.Sprintf("+%d", lineDistance)
+	}
+
+	return lineNumberStyle.Render(lineNumber)
+}
+
+func (m *Model) adjustViewPort() {
+	line, _ := m.cursor.GetPosition()
+	direction := m.cursor.GetDirection()
+
+	switch direction {
+	case "up":
+		if line < m.topLine {
+			m.topLine = line
+		}
+	case "down":
+		if line > m.topLine+m.height-2 {
+			m.topLine = line - m.height + 2
+		}
+	}
+}
+
 func (m Model) View() string {
 	output := ""
 
-	for line, text := range m.buffer.GetText() {
+	for line := m.topLine; line < m.topLine+m.height-1; line++ {
 		output += fmt.Sprintf(
 			"%s %s %s\n",
-			lineNumberStyle.Render(m.cursor.GetFormattedDistance(line)),
+			m.viewLineNumber(line),
 			separator,
-			m.cursor.View(text, line),
+			m.cursor.View(m.buffer.GetLine(line), line),
 		)
-
-		if line == m.height-3 {
-			break
-		}
 	}
 
 	return output
