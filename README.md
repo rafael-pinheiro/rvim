@@ -1,6 +1,7 @@
 # Rafa's VIM
 
 Kinda like VIM.
+
 Built by Rafa, built for Rafa.
 
 # Moving around
