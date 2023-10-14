@@ -25,15 +25,15 @@ jobs:
         go-version: '1.20'
 
     - name: Build linux/amd64
-      run: GOOS=linux GOARCH=amd64 go build -o linux/amd64/rvim ./cmd/rvim
+      run: GOOS=linux GOARCH=amd64 go build -o rvim-linux-amd64 ./cmd/rvim
     - name: Build darwin/amd64
-      run: GOOS=darwin GOARCH=amd64 go build -o darwin/amd64/rvim ./cmd/rvim
+      run: GOOS=darwin GOARCH=amd64 go build -o rvim-macos-amd64 ./cmd/rvim
     - name: Build darwin/arm64
-      run: GOOS=darwin GOARCH=arm64 go build -o darwin/arm64/rvim ./cmd/rvim
+      run: GOOS=darwin GOARCH=arm64 go build -o rvim-macos-arm64-rvim ./cmd/rvim
     - uses: ncipollo/release-action@v1
       with:
-        artifacts: "README.md,linux/amd64/rvim,darwin/amd64/rvim,darwin/arm64/rvim"
-        tag: "pre-alpha"
+        artifacts: "README.md,rvim-linux-amd64,rvim-macos-amd64,rvim-macos-arm64-rvim"
+        tag: ${{ "pre-alpha-" + vars.GITHUB_SHA }}
         commit: "main"
         prerelease: true
   
