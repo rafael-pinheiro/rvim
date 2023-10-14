@@ -28,7 +28,7 @@ jobs:
     - uses: wangyoucao577/go-release-action@v1
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        automatic_release_tag: "pre-alpha"
+        release_tag: "pre-alpha"
         prerelease: true
         goos: ${{ matrix.goos }}
         goarch: ${{ matrix.goarch }}
