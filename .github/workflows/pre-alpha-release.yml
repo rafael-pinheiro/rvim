@@ -33,7 +33,7 @@ jobs:
     - uses: ncipollo/release-action@v1
       with:
         artifacts: "README.md,rvim-linux-amd64,rvim-macos-amd64,rvim-macos-arm64-rvim"
-        tag: ${{ "pre-alpha-" + vars.GITHUB_SHA }}
+        tag: pre-alpha-${{ github.sha }}
         commit: "main"
         prerelease: true
   
