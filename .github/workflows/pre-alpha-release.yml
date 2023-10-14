@@ -29,11 +29,11 @@ jobs:
     - name: Build darwin/amd64
       run: GOOS=darwin GOARCH=amd64 go build -o rvim-macos-amd64 ./cmd/rvim
     - name: Build darwin/arm64
-      run: GOOS=darwin GOARCH=arm64 go build -o rvim-macos-arm64-rvim ./cmd/rvim
+      run: GOOS=darwin GOARCH=arm64 go build -o rvim-macos-arm64 ./cmd/rvim
     - uses: ncipollo/release-action@v1
       with:
-        artifacts: "README.md,rvim-linux-amd64,rvim-macos-amd64,rvim-macos-arm64-rvim"
-        tag: pre-alpha-${{ github.sha }}
+        artifacts: "README.md,rvim-linux-amd64,rvim-macos-amd64,rvim-macos-arm64"
+        tag: pre-alpha-${{ github.run_number }}
         commit: "main"
         prerelease: true
   
