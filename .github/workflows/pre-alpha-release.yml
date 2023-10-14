@@ -24,8 +24,12 @@ jobs:
       with:
         go-version: '1.20'
 
-    - name: Build
-      run: go build ./cmd/rvim
+    - name: Build linux/amd64
+      run: GOOS=linux GOARCH=amd64 go build -o linux/amd64/rvim ./cmd/rvim
+    - name: Build darwin/amd64
+      run: GOOS=darwin GOARCH=amd64 go build -o darwin/amd64/rvim ./cmd/rvim
+    - name: Build darwin/arm64
+      run: GOOS=darwin GOARCH=arm64 go build -o darwin/arm64/rvim ./cmd/rvim
     - uses: ncipollo/release-action@v1
       with:
         artifacts: "rvim"
