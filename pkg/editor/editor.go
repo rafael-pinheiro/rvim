@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"rvim/pkg/buffer"
 	"rvim/pkg/cursor"
+	editor "rvim/pkg/editor/modes"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -12,6 +13,7 @@ import (
 type Model struct {
 	buffer  buffer.Model
 	cursor  cursor.Model
+	mode    editor.Mode
 	topLine int
 	width   int
 	height  int
@@ -23,6 +25,7 @@ func CreateModel(filePath string) Model {
 	return Model{
 		buffer:  buffer,
 		cursor:  cursor.CreateModel(&buffer),
+		mode:    editor.CreateNormalMode(),
 		topLine: 0,
 		width:   10,
 		height:  10,
@@ -44,6 +47,9 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	}
 
 	m.cursor, cmd = m.cursor.Update(msg)
+	cmds = append(cmds, cmd)
+
+	m.mode, cmd = m.mode.Update(msg)
 	cmds = append(cmds, cmd)
 
 	m.adjustViewPort()
