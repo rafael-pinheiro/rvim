@@ -3,40 +3,69 @@ package buffer
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"os"
 )
 
+type lineDescriptor struct {
+	offset int
+	length int
+}
+
 type Model struct {
-	text []string
+	original        io.ReaderAt
+	size            int
+	lineDescriptors []lineDescriptor
 }
 
 func CreateModel(filePath string) Model {
-	readFile, err := os.Open(filePath)
+	file, err := os.Open(filePath)
 
 	if err != nil {
 		fmt.Println("could not load file:", err)
 		os.Exit(1)
 	}
 
-	fileScanner := bufio.NewScanner(readFile)
-	fileScanner.Split(bufio.ScanLines)
-	var fileLines []string
+	stat, err := file.Stat()
 
-	for fileScanner.Scan() {
-		fileLines = append(fileLines, fileScanner.Text())
+	if err != nil {
+		fmt.Println("could not load file:", err)
+		os.Exit(1)
 	}
 
-	readFile.Close()
+	lineDescriptors := []lineDescriptor{}
+
+	scanner := bufio.NewScanner(file)
+	offset := 0
+	for scanner.Scan() {
+		lineLength := len(scanner.Bytes())
+		lineDescriptors = append(lineDescriptors, lineDescriptor{
+			offset: offset,
+			length: lineLength,
+		})
+		offset += lineLength + 1
+	}
 
 	return Model{
-		text: fileLines,
+		original:        file,
+		size:            int(stat.Size()),
+		lineDescriptors: lineDescriptors,
 	}
 }
 
-func (m Model) GetText() []string {
-	return m.text
+func (m Model) Lines() int {
+	return len(m.lineDescriptors)
 }
 
 func (m Model) GetLine(line int) string {
-	return m.text[line]
+	lineDescriptor := m.lineDescriptors[line]
+	reader := io.NewSectionReader(m.original, int64(lineDescriptor.offset), int64(lineDescriptor.length))
+	result := make([]byte, lineDescriptor.length)
+	_, err := reader.Read(result)
+
+	if err != nil {
+		panic(err)
+	}
+
+	return string(result)
 }

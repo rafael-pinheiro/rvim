@@ -82,7 +82,7 @@ func (m *Model) GoUp() {
 }
 
 func (m *Model) GoDownBy(amount int) {
-	m.line = utils.Min(len(m.buffer.GetText())-1, m.line+amount)
+	m.line = utils.Min(m.buffer.Lines()-1, m.line+amount)
 	m.direction = "down"
 	m.column = utils.Min(
 		utils.Max(0, len(m.buffer.GetLine(m.line))-1),
@@ -114,7 +114,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				m.column,
 			)
 		case "down":
-			m.line = utils.Min(len(m.buffer.GetText())-1, m.line+msg.amount)
+			m.line = utils.Min(m.buffer.Lines()-1, m.line+msg.amount)
 			m.column = utils.Min(
 				utils.Max(0, len(m.buffer.GetLine(m.line))-1),
 				m.column,
