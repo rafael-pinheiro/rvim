@@ -52,6 +52,9 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	m.mode, cmd = m.mode.Update(msg)
 	cmds = append(cmds, cmd)
 
+	m.buffer, cmd = m.buffer.Update(msg)
+	cmds = append(cmds, cmd)
+
 	m.adjustViewPort()
 
 	return m, tea.Batch(cmds...)

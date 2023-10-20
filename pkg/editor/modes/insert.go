@@ -1,6 +1,7 @@
 package editor
 
 import (
+	"rvim/pkg/buffer"
 	"rvim/pkg/cursor"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -33,8 +34,7 @@ func (m InsertMode) Update(msg tea.Msg) (Mode, tea.Cmd) {
 		case tea.KeyDelete:
 			// Handle delete
 		case tea.KeyRunes:
-			panic(msg.String())
-			// Msg to update buffer
+			return m, buffer.Append(0, msg.String())
 		}
 	}
 

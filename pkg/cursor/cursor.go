@@ -54,47 +54,6 @@ func (m Model) GetDirection() string {
 	return m.direction
 }
 
-func (m *Model) goLeftBy(amount int) {
-	m.column = utils.Max(0, m.column-amount)
-	m.direction = "left"
-	m.style = styles[true]
-}
-
-func (m *Model) goRightBy(amount int) {
-	m.column = utils.Min(len(m.buffer.GetLine(m.line))-1, m.column+amount)
-	m.direction = "right"
-}
-
-func (m *Model) GoUpBy(amount int) {
-	m.line = utils.Max(0, m.line-amount)
-	m.direction = "up"
-
-	m.column = utils.Min(
-		utils.Max(0, len(m.buffer.GetLine(m.line))-1),
-		m.column,
-	)
-
-	m.style = styles[true]
-}
-
-func (m *Model) GoUp() {
-	m.GoUpBy(1)
-}
-
-func (m *Model) GoDownBy(amount int) {
-	m.line = utils.Min(m.buffer.Lines()-1, m.line+amount)
-	m.direction = "down"
-	m.column = utils.Min(
-		utils.Max(0, len(m.buffer.GetLine(m.line))-1),
-		m.column,
-	)
-	m.style = styles[true]
-}
-
-func (m *Model) GoDown() {
-	m.GoDownBy(1)
-}
-
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case blinkMsg:

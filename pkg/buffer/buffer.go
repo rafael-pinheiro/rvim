@@ -3,54 +3,84 @@ package buffer
 import (
 	"bufio"
 	"fmt"
-	"io"
 	"os"
+
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 type lineDescriptor struct {
-	offset int
-	length int
+	pieces []PieceDescriptor
+}
+
+type PieceDescriptor struct {
+	source string
+	offset int64
+	length int64
 }
 
 type Model struct {
-	original        io.ReaderAt
-	size            int
+	original        *os.File
+	append          *os.File
+	appendOffset    int64
 	lineDescriptors []lineDescriptor
 }
 
 func CreateModel(filePath string) Model {
-	file, err := os.Open(filePath)
+	var originalFile, appendFile *os.File
+	var err error
+
+	originalFile, err = os.Open(filePath)
 
 	if err != nil {
 		fmt.Println("could not load file:", err)
 		os.Exit(1)
 	}
 
-	stat, err := file.Stat()
+	appendFile, err = os.CreateTemp("", "append-")
 
 	if err != nil {
-		fmt.Println("could not load file:", err)
+		fmt.Println("could not create temporary file:", err)
 		os.Exit(1)
 	}
 
 	lineDescriptors := []lineDescriptor{}
 
-	scanner := bufio.NewScanner(file)
-	offset := 0
+	scanner := bufio.NewScanner(originalFile)
+	var offset int64 = 0
 	for scanner.Scan() {
-		lineLength := len(scanner.Bytes())
+		lineLength := int64(len(scanner.Bytes()))
 		lineDescriptors = append(lineDescriptors, lineDescriptor{
-			offset: offset,
-			length: lineLength,
+			pieces: []PieceDescriptor{{
+				source: "original",
+				offset: offset,
+				length: lineLength,
+			}},
 		})
 		offset += lineLength + 1
 	}
 
 	return Model{
-		original:        file,
-		size:            int(stat.Size()),
+		original:        originalFile,
+		append:          appendFile,
 		lineDescriptors: lineDescriptors,
 	}
+}
+
+func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case appendMsg:
+		length := int64(len(msg.text))
+		m.append.Seek(m.appendOffset, 0)
+		m.append.WriteString(msg.text)
+		m.lineDescriptors[0].pieces = append([]PieceDescriptor{{
+			source: "append",
+			offset: m.appendOffset,
+			length: length,
+		}}, m.lineDescriptors[0].pieces...)
+		m.appendOffset += length
+	}
+
+	return m, nil
 }
 
 func (m Model) Lines() int {
@@ -59,13 +89,23 @@ func (m Model) Lines() int {
 
 func (m Model) GetLine(line int) string {
 	lineDescriptor := m.lineDescriptors[line]
-	reader := io.NewSectionReader(m.original, int64(lineDescriptor.offset), int64(lineDescriptor.length))
-	result := make([]byte, lineDescriptor.length)
-	_, err := reader.Read(result)
+	var output []byte
 
-	if err != nil {
-		panic(err)
+	for _, piece := range lineDescriptor.pieces {
+		reader := m.original
+		if piece.source == "append" {
+			reader = m.append
+		}
+		reader.Seek(piece.offset, 0)
+
+		a := make([]byte, piece.length)
+		if _, err := reader.Read(a); err != nil {
+			fmt.Println(m.append.Name())
+			fmt.Println(piece)
+			os.Exit(1)
+		}
+		output = append(output, a...)
 	}
 
-	return string(result)
+	return string(output)
 }
