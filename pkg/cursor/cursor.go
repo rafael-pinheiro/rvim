@@ -10,7 +10,6 @@ import (
 )
 
 type Model struct {
-	buffer         *buffer.Model
 	line           int
 	column         int
 	direction      string
@@ -24,9 +23,8 @@ var styles = map[bool]lipgloss.Style{
 	false: lipgloss.NewStyle(),
 }
 
-func CreateModel(buffer *buffer.Model) Model {
+func CreateModel() Model {
 	return Model{
-		buffer:         buffer,
 		line:           0,
 		column:         0,
 		direction:      "",
@@ -54,7 +52,11 @@ func (m Model) GetDirection() string {
 	return m.direction
 }
 
-func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
+func (m Model) getLineLength(buffer buffer.Model) int {
+	return len(buffer.GetLines(m.line, 1)[0])
+}
+
+func (m Model) Update(msg tea.Msg, buffer buffer.Model) (Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case blinkMsg:
 		m.style = msg.style
@@ -62,20 +64,20 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	case moveMsg:
 		switch msg.direction {
 		case "right":
-			m.column = utils.Min(len(m.buffer.GetLine(m.line))-1, m.column+msg.amount)
+			m.column = utils.Min(m.getLineLength(buffer)-1, m.column+msg.amount)
 		case "left":
 			m.column = utils.Max(0, m.column-msg.amount)
 		case "up":
 			m.line = utils.Max(0, m.line-msg.amount)
 
 			m.column = utils.Min(
-				utils.Max(0, len(m.buffer.GetLine(m.line))-1),
+				utils.Max(0, m.getLineLength(buffer)-1),
 				m.column,
 			)
 		case "down":
-			m.line = utils.Min(m.buffer.Lines()-1, m.line+msg.amount)
+			m.line = utils.Min(buffer.CountLines()-1, m.line+msg.amount)
 			m.column = utils.Min(
-				utils.Max(0, len(m.buffer.GetLine(m.line))-1),
+				utils.Max(0, m.getLineLength(buffer)-1),
 				m.column,
 			)
 		default:

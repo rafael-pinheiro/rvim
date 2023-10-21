@@ -24,7 +24,7 @@ func CreateModel(filePath string) Model {
 
 	return Model{
 		buffer:  buffer,
-		cursor:  cursor.CreateModel(&buffer),
+		cursor:  cursor.CreateModel(),
 		mode:    editor.CreateNormalMode(),
 		topLine: 0,
 		width:   10,
@@ -46,13 +46,14 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		m.height = msg.Height
 	}
 
-	m.cursor, cmd = m.cursor.Update(msg)
+	m.cursor, cmd = m.cursor.Update(msg, m.buffer)
 	cmds = append(cmds, cmd)
 
 	m.mode, cmd = m.mode.Update(msg)
 	cmds = append(cmds, cmd)
 
-	m.buffer, cmd = m.buffer.Update(msg)
+	_, column := m.cursor.GetPosition()
+	m.buffer, cmd = m.buffer.Update(msg, column)
 	cmds = append(cmds, cmd)
 
 	m.adjustViewPort()
@@ -93,13 +94,14 @@ func (m *Model) adjustViewPort() {
 
 func (m Model) View() string {
 	output := ""
+	lines := m.buffer.GetLines(m.topLine, m.height-1)
 
-	for line := m.topLine; line < m.topLine+m.height-1; line++ {
+	for index, line := range lines {
 		output += fmt.Sprintf(
 			"%s %s %s\n",
-			m.viewLineNumber(line),
+			m.viewLineNumber(m.topLine+index),
 			separator,
-			m.cursor.View(m.buffer.GetLine(line), line),
+			m.cursor.View(line, m.topLine+index),
 		)
 	}
 
