@@ -1,8 +1,7 @@
 package editor
 
 import (
-	"rvim/pkg/buffer"
-	"rvim/pkg/cursor"
+	"rvim/pkg/commands"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -22,19 +21,19 @@ func (m InsertMode) Update(msg tea.Msg) (Mode, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyLeft:
-			return m, cursor.Move("left", 1)
+			return m, commands.Move("left", 1)
 		case tea.KeyRight:
-			return m, cursor.Move("right", 1)
+			return m, commands.Move("right", 1)
 		case tea.KeyUp:
-			return m, cursor.Move("up", 1)
+			return m, commands.Move("up", 1)
 		case tea.KeyDown:
-			return m, cursor.Move("down", 1)
+			return m, commands.Move("down", 1)
 		case tea.KeyEscape:
 			return CreateNormalMode(), nil
 		case tea.KeyDelete:
 			// Handle delete
 		case tea.KeyRunes:
-			return m, buffer.Append(0, msg.String())
+			return m, commands.Append(msg.String())
 		}
 	}
 

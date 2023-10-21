@@ -3,6 +3,7 @@ package cursor
 import (
 	"fmt"
 	"rvim/pkg/buffer"
+	"rvim/pkg/commands"
 	"rvim/pkg/utils"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -17,26 +18,19 @@ type Model struct {
 	blinkerChannel chan lipgloss.Style
 }
 
-var styles = map[bool]lipgloss.Style{
-	true: lipgloss.NewStyle().
-		Background(lipgloss.Color("#CCCCCC")),
-	false: lipgloss.NewStyle(),
-}
-
 func CreateModel() Model {
 	return Model{
 		line:           0,
 		column:         0,
 		direction:      "",
-		style:          styles[true],
 		blinkerChannel: make(chan lipgloss.Style),
 	}
 }
 
 func (m Model) Init() tea.Cmd {
 	return tea.Batch(
-		blinkCursor(m.blinkerChannel),
-		waitForBlink(m.blinkerChannel),
+		commands.BlinkCursor(m.blinkerChannel),
+		commands.WaitForBlink(m.blinkerChannel),
 	)
 }
 
@@ -58,34 +52,34 @@ func (m Model) getLineLength(buffer buffer.Model) int {
 
 func (m Model) Update(msg tea.Msg, buffer buffer.Model) (Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case blinkMsg:
-		m.style = msg.style
-		return m, waitForBlink(m.blinkerChannel)
-	case moveMsg:
-		switch msg.direction {
+	case commands.BlinkMsg:
+		m.style = msg.Style
+		return m, commands.WaitForBlink(m.blinkerChannel)
+	case commands.MoveMsg:
+		switch msg.Direction {
 		case "right":
-			m.column = utils.Min(m.getLineLength(buffer)-1, m.column+msg.amount)
+			m.column = utils.Min(m.getLineLength(buffer)-1, m.column+msg.Amount)
 		case "left":
-			m.column = utils.Max(0, m.column-msg.amount)
+			m.column = utils.Max(0, m.column-msg.Amount)
 		case "up":
-			m.line = utils.Max(0, m.line-msg.amount)
+			m.line = utils.Max(0, m.line-msg.Amount)
 
 			m.column = utils.Min(
 				utils.Max(0, m.getLineLength(buffer)-1),
 				m.column,
 			)
 		case "down":
-			m.line = utils.Min(buffer.CountLines()-1, m.line+msg.amount)
+			m.line = utils.Min(buffer.CountLines()-1, m.line+msg.Amount)
 			m.column = utils.Min(
 				utils.Max(0, m.getLineLength(buffer)-1),
 				m.column,
 			)
 		default:
-			panic(fmt.Sprintf("Cannot move cursor, direction \"%s\" is invalid", msg.direction))
+			panic(fmt.Sprintf("Cannot move cursor, direction \"%s\" is invalid", msg.Direction))
 		}
 
-		m.direction = msg.direction
-		m.style = styles[true]
+		m.direction = msg.Direction
+		// m.style = styles[true]
 	}
 
 	return m, nil

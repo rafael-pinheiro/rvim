@@ -52,8 +52,8 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	m.mode, cmd = m.mode.Update(msg)
 	cmds = append(cmds, cmd)
 
-	_, column := m.cursor.GetPosition()
-	m.buffer, cmd = m.buffer.Update(msg, column)
+	line, column := m.cursor.GetPosition()
+	m.buffer, cmd = m.buffer.Update(msg, line, column)
 	cmds = append(cmds, cmd)
 
 	m.adjustViewPort()

@@ -1,7 +1,7 @@
 package editor
 
 import (
-	"rvim/pkg/cursor"
+	"rvim/pkg/commands"
 	"strconv"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -24,13 +24,13 @@ func (m NormalMode) Update(msg tea.Msg) (Mode, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "h", "left":
-			return m, cursor.Move("left", m.getRepeater())
+			return m, commands.Move("left", m.getRepeater())
 		case "l", "right":
-			return m, cursor.Move("right", m.getRepeater())
+			return m, commands.Move("right", m.getRepeater())
 		case "k", "up":
-			return m, cursor.Move("up", m.getRepeater())
+			return m, commands.Move("up", m.getRepeater())
 		case "j", "down":
-			return m, cursor.Move("down", m.getRepeater())
+			return m, commands.Move("down", m.getRepeater())
 		case "i":
 			return CreateInsertMode(), nil
 		case "0":
